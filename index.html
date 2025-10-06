@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🍞 Cardápio - Padaria Recamonde</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body { background: linear-gradient(135deg,#F19720,#fef7f1); }
+    .card{border-radius:20px;box-shadow:0 8px 20px rgba(0,0,0,.1);}
+    .form-check{background:#fff;padding:10px 12px;border-radius:12px;margin-bottom:10px;box-shadow:0 2px 5px rgba(0,0,0,.05);}
+    .form-check:hover{background-color:#fff8f1;}
+    .section-title{border-bottom:2px solid #F19720;padding-bottom:5px;color:#1d3557;margin-top:25px;}
+    .qtd-select{width:90px;display:inline-block;margin-left:10px;}
+    .botao{padding:12px 24px;border-radius:50px;text-decoration:none;color:white;font-weight:600;display:inline-flex;align-items:center;gap:8px;transition:background-color .3s,transform .2s;box-shadow:0 4px 10px rgba(0,0,0,.2);}
+    .botao:hover{transform:scale(1.05);box-shadow:0 6px 14px rgba(0,0,0,.3);}
+    .whatsapp{background-color:#25D366;}
+    .whatsapp:hover{background-color:#1ebe57;}
+    .instagram{background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);}
+    .whatsapp-button{position:fixed;bottom:20px;right:20px;z-index:9999;background-color:#25D366;padding:12px;border-radius:50%;box-shadow:0 4px 10px rgba(0,0,0,.3);}
+    .price{font-weight:600;color:#1d3557;}
+
+    /* Personalização de ingredientes (chips) */
+    .ing-actions{display:flex;gap:.5rem;flex-wrap:wrap;}
+    .ing-list .form-check{box-shadow:none;padding:4px 8px;margin:6px 14px 10px 0;display:inline-flex;align-items:center;border:1px solid #eee;border-radius:8px;background:#fffdf9;transition:.2s;}
+    .ing-list .form-check:hover{background:#fff6e8;}
+  </style>
+</head>
+<body>
+  <div class="container py-4">
+    <div class="card p-4">
+      <h1 class="text-center text-danger mb-3">🍞 Padaria Recamonde</h1>
+      <p class="text-center text-muted mb-4">Selecione os itens, ajuste a quantidade e envie pelo WhatsApp.</p>
+
+      <!-- Busca -->
+      <div class="mb-4">
+        <input id="busca" class="form-control" style="border-radius:50px;padding:10px 16px"
+               placeholder="🔎 Buscar por item ou ingrediente (ex.: bacon, cheddar, coca)">
+      </div>
+
+      <div id="menu"></div>
+
+      <!-- Dados do cliente -->
+      <div class="mt-4">
+        <label for="nome" class="form-label">Seu nome:</label>
+        <input id="nome" type="text" class="form-control" placeholder="Digite seu nome" required>
+      </div>
+      <div class="mt-3">
+        <label for="observacoes" class="form-label">Observações:</label>
+        <textarea id="observacoes" class="form-control" rows="2"
+                  placeholder="Ex.: sem cebola, bem passado..."></textarea>
+      </div>
+
+      <!-- Ações -->
+      <div class="text-center mt-4">
+        <button id="btnWhats" type="button" class="botao whatsapp me-2">📲 Enviar Pedido</button>
+        <a href="https://www.instagram.com/" target="_blank" class="botao instagram">📸 Instagram</a>
+      </div>
+      <div class="text-center mt-3 text-muted" id="totalBox" style="display:none;">
+        <small>Total parcial: <strong id="totalSpan"></strong></small>
+      </div>
+
+      <a href="#" id="btnWhatsFloat" class="whatsapp-button" title="Fazer pedido no WhatsApp">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" width="40" alt="WhatsApp">
+      </a>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+
+    // -------- CONFIG --------
+    const NUMERO_WHATSAPP = '5585988608359'; // troque para o seu (DDI+DDD+número)
+
+    // -------- CARDÁPIO --------
+    const MENU = [
+      { categoria:'🥪 Lanches', itens:[
+        { id:'001', nome:'X-Burguer', preco:12.00, ingredientes:['Pão brioche','blend 140g','queijo cheddar','maionese da casa','molho especial'] },
+        { id:'002', nome:'X-Salada',  preco:14.00, ingredientes:['Pão brioche','blend 140g','queijo muçarela','alface americana','tomate','cebola roxa','molho especial'] },
+        { id:'003', nome:'X-Bacon',   preco:16.00, ingredientes:['Pão brioche','blend 140g','queijo cheddar','tiras de bacon','maionese da casa','molho barbecue'] },
+        { id:'004', nome:'X-Tudo',    preco:20.00, ingredientes:['Pão brioche','2× blend 140g','duplo cheddar','cebola caramelizada','picles','farofa de bacon','maionese da casa'] },
+      ]},
+      { categoria:'🍟 Porções', itens:[
+        { id:'101', nome:'Batata Frita (P)', preco:10.00, ingredientes:['Batata palito crocante','sal'] },
+        { id:'102', nome:'Batata Frita (M)', preco:15.00, ingredientes:['Batata palito crocante','sal'] },
+      ]},
+      { categoria:'🥤 Bebidas', itens:[
+        { id:'201', nome:'Coca-Cola Lata', preco:6.00, ingredientes:['Refrigerante gaseificado 350 ml'] },
+        { id:'202', nome:'Guaraná Lata',   preco:5.00, ingredientes:['Refrigerante de guaraná 350 ml'] },
+      ]}
+    ];
+
+    // -------- UTILS --------
+    const formatBRL = v => v.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+    const createId = (c,i) => `item-${c}-${i}`;
+    const qtyOptions = (max=10, sel=1) =>
+      Array.from({length:max}, (_,k)=>k+1)
+           .map(n => `<option value="${n}" ${n===sel?'selected':''}>${n}</option>`).join('');
+
+    // -------- RENDER --------
+    function renderMenu(data){
+      const wrap = document.getElementById('menu');
+      wrap.innerHTML = '';
+
+      data.forEach((cat, cidx) => {
+        const h = document.createElement('h3');
+        h.className = 'section-title';
+        h.textContent = cat.categoria;
+        wrap.appendChild(h);
+
+        cat.itens.forEach((item, iidx) => {
+          const id = createId(cidx, iidx);
+          const row = document.createElement('div');
+          row.className = 'form-check';
+          row.innerHTML = `
+            <input class="form-check-input" type="checkbox" id="${id}"
+                   data-preco="${item.preco}" data-nome="${item.nome}" data-codigo="${item.id}">
+            <label class="form-check-label" for="${id}">
+              ${item.id} - ${item.nome} (<span class="price">${formatBRL(item.preco)}</span>)
+            </label>
+
+            <!-- Quantidade como SELECT 1..10 -->
+            <select id="qtd-${id}" class="form-select form-select-sm qtd-select" aria-label="Quantidade">
+              ${qtyOptions(10,1)}
+            </select>
+
+            <a class="btn btn-sm btn-link p-0 ms-2" data-bs-toggle="collapse"
+               href="#ing-${id}" role="button" aria-expanded="false" aria-controls="ing-${id}">
+               Personalizar
+            </a>
+
+            <div class="collapse mt-2" id="ing-${id}">
+              <div class="ing-actions mb-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-action="marcar" data-target="${id}">Marcar todos</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-action="desmarcar" data-target="${id}">Desmarcar todos</button>
+              </div>
+              <div class="ing-list" data-for="${id}">
+                ${item.ingredientes.map((ing,k)=>`
+                  <div class='form-check form-check-inline me-3'>
+                    <input class='form-check-input ing-cb' type='checkbox' id='ing-${id}-${k}' checked data-nome='${ing}'>
+                    <label class='form-check-label' for='ing-${id}-${k}'>${ing}</label>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+          wrap.appendChild(row);
+        });
+      });
+
+      bindInteractions();
+    }
+
+    // -------- INTERAÇÕES --------
+    function bindInteractions(){
+      document.querySelectorAll('#menu input[type=checkbox]').forEach(cb =>
+        cb.addEventListener('change', updateTotal)
+      );
+      document.querySelectorAll('#menu .qtd-select').forEach(sel =>
+        sel.addEventListener('change', updateTotal)
+      );
+      document.querySelectorAll('.ing-actions [data-action]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const targetId = btn.getAttribute('data-target');
+          const list = document.querySelector(`.ing-list[data-for="${targetId}"]`);
+          if(!list) return;
+          const marcar = btn.getAttribute('data-action') === 'marcar';
+          list.querySelectorAll('.ing-cb').forEach(cb => cb.checked = marcar);
+        });
+      });
+    }
+
+    function updateTotal(){
+      let total = 0;
+      document.querySelectorAll('#menu input[type=checkbox]:checked').forEach(cb=>{
+        const qtdSel = document.getElementById('qtd-'+cb.id);
+        if(!qtdSel) return;
+        const qtd = parseInt(qtdSel.value) || 1;
+        const preco = parseFloat(cb.getAttribute('data-preco')) || 0;
+        total += qtd * preco;
+      });
+      const box = document.getElementById('totalBox');
+      const span = document.getElementById('totalSpan');
+      if(total > 0){ box.style.display='block'; span.textContent = formatBRL(total); }
+      else { box.style.display='none'; span.textContent=''; }
+    }
+
+    // -------- MENSAGEM WHATSAPP (bonita) --------
+    function montarMensagem(){
+      const nome = document.getElementById('nome').value.trim();
+      const obs  = document.getElementById('observacoes').value.trim();
+      if(!nome){ alert('Digite seu nome!'); return null; }
+
+      const selecionados = document.querySelectorAll('#menu input[type=checkbox]:checked');
+      if(selecionados.length === 0){ alert('Selecione pelo menos um item!'); return null; }
+
+      let msg = `🍞 *Pedido de ${nome}*\\n\\n`;
+      let total = 0;
+
+      selecionados.forEach(cb=>{
+        const qtdSel = document.getElementById('qtd-'+cb.id);
+        if(!qtdSel) return;
+        const qtd = parseInt(qtdSel.value) || 1;
+        const preco = parseFloat(cb.getAttribute('data-preco')) || 0;
+
+        // 👇 estas variáveis evitam o erro "codigo is not defined"
+        const codigo   = cb.getAttribute('data-codigo');
+        const nomeItem = cb.getAttribute('data-nome');
+
+        const row = cb.closest('.form-check');
+        const removed = Array.from(row.querySelectorAll('.ing-cb:not(:checked)')).map(x=>x.getAttribute('data-nome'));
+
+        const subtotal = qtd * preco;
+        total += subtotal;
+
+        msg += `✅ ${qtd} x *${codigo} - ${nomeItem}*\\n`;
+        if(removed.length){ msg += `🚫 *Sem:* ${removed.join(', ')}\\n`; }
+        msg += `💵 Subtotal: ${formatBRL(subtotal)}\\n\\n`;
+      });
+
+      msg += `━━━━━━━━━━━━━━━\\n`;
+      msg += `💰 *Total Geral:* ${formatBRL(total)}\\n`;
+      if (obs) msg += `📝 *Obs:* ${obs}\\n`;
+      msg += `📦 Pedido enviado pelo *Cardápio Online*`;
+      return msg;
+    }
+
+    function enviarPedido(){
+      const mensagem = montarMensagem();
+      if(!mensagem) return;
+      const url = `https://api.whatsapp.com/send?phone=${NUMERO_WHATSAPP}&text=${encodeURIComponent(mensagem)}`;
+      window.open(url, '_blank');
+    }
+
+    // Eventos
+    document.getElementById('btnWhats').addEventListener('click', enviarPedido);
+    document.getElementById('btnWhatsFloat').addEventListener('click', (e)=>{ e.preventDefault(); enviarPedido(); });
+    document.getElementById('busca').addEventListener('input', (e)=>{
+      const term = (e.target.value || '').toLowerCase();
+      if(!term){ renderMenu(MENU); return; }
+      const filtered = MENU.map(cat => ({
+        categoria: cat.categoria,
+        itens: cat.itens.filter(it => {
+          const base = `${it.id} ${it.nome} ${it.ingredientes.join(' ')}`.toLowerCase();
+          return base.includes(term);
+        })
+      })).filter(cat => cat.itens.length > 0);
+      renderMenu(filtered.length ? filtered : []);
+    });
+
+    // Start
+    renderMenu(MENU);
+  });
+  </script>
+</body>
+</html>
